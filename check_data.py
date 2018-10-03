@@ -68,7 +68,7 @@ for file in file_lists:
     
     #check the vessel name whether exist or right,if not,repair it
     EXIST=0   
-    #if the  vessel name s exist, find the location    
+    #if the  vessel name is exist, find the location    
     for k in range(len(df_head['Probe Type'])):           
         if df_head['Probe Type'][k]=='Vessel Name' or df_head['Probe Type'][k]=='vessel name':
             EXIST=1
