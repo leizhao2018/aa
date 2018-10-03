@@ -74,7 +74,6 @@ for file in file_lists:
             EXIST=1
             LOC_V_NAME=k
     #fix the vessel name 
-    
     if EXIST==1:
         df_head['Lowell'][LOC_V_NAME]=vessel_name
         new_head=df_head
@@ -82,8 +81,7 @@ for file in file_lists:
         new_head=pd.concat([df_head[:LOC_V_number+1],pd.DataFrame(data=[['Vessel Name',vessel_name]],columns=['Probe Type','Lowell']),df_head[LOC_V_number+1:]],ignore_index=True)
     if new_head['Lowell'][LOC_V_number]=='99':
         new_head=new_head.replace(vessel_name,'Test')
-        print file
-              #if the file is test file,print it
+        print file       #if the file is test file,print it
       
     #creat the path and name of the new_file and the temperature file  
     output_path_name=file.replace(input_dir2,'output_data/data/'+vessel_name+'/').replace(file.split('/')[len(file.split('/'))-1],new_file)#the output path and the print file. 
