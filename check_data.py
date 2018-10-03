@@ -86,11 +86,6 @@ for file in file_lists:
     #creat the path and name of the new_file and the temperature file  
     output_path_name=file.replace(input_dir2,'output_data/data/'+vessel_name+'/').replace(file.split('/')[len(file.split('/'))-1],new_file)#the output path and the print file. 
     path_tem_file=input_dir+'df_tem.csv'
-    #determine the new_file and the temperature file are exist in the output folder,if exist,delete them      
-    if os.path.exists(output_path_name):
-        os.remove(output_path_name)
-    if os.path.exists(path_tem_file):
-        os.remove(path_tem_file)
     new_head.to_csv(output_path_name,index=0)
     df.to_csv(path_tem_file,index=0)
    
