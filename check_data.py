@@ -7,6 +7,7 @@ Created on Mon Sep 24 11:15:59 2018
 -the vessel name is exist? if not,insert the name
 NOTICE:THE FILE NAME CAN'T HAVE THIS STR SUCH AS ')','(',' '.
 @author: leizhao
+modefied in Oct 3,2018
 """
 import pandas as pd
 import os
@@ -40,7 +41,8 @@ for file in file_lists:
             header_rows=i  
     # now, read header and data     
     df=pd.read_csv(file,sep=',',skiprows=header_rows+1).dropna(axis=1,how='all') #data
-    df_head=pd.read_csv(file,sep=',',nrows=header_rows).dropna(axis=1,how='all')  # header only
+    name=['key','value','value1','value2','value3','value4']
+    df_head=pd.read_csv(file,sep=',',nrows=header_rows,names=name).dropna(axis=1,how='all') # header only
 
     #the standard data have 6 columns, sometimes the data possible lack of the column of the HEADING. If lack, fixed it
     if len(df.iloc[0])==5: # some files didn't have the "DATA" in the first column
@@ -56,37 +58,41 @@ for file in file_lists:
     count=0
     for i in range(len(df['Depth (m)'])):
         count=count+(df['Depth (m)'][i]>mindepth)# keep track of # of depths>10
-    for j in range(len(df_head['Lowell'])):
-        if df_head['Probe Type'][j]=='Vessel Number' or df_head['Probe Type'][j]=='vessel number':
+    for j in range(len(df_head['value'])):
+        if df_head['key'][j]=='Vessel Number' or df_head['key'][j]=='vessel number':
             LOC_V_number=j               
             if count!=0:       #if data is shoreside,the number is 99;if not through the vessel_number to repaire it 
                 for i in range(len(vessel_number_df['vessel_number'])):
                     if vessel_number_df['name'][i]==vessel_name:
-                        df_head['Lowell'][j]=vessel_number_df['vessel_number'][i]
+                        df_head['value'][j]=vessel_number_df['vessel_number'][i]
             else:
-                df_head['Lowell'][j]='99'
+                df_head['value'][j]='99'
+            break
     
     #check the vessel name whether exist or right,if not,repair it
     EXIST=0   
-    #if the  vessel name is exist, find the location    
-    for k in range(len(df_head['Probe Type'])):           
-        if df_head['Probe Type'][k]=='Vessel Name' or df_head['Probe Type'][k]=='vessel name':
+    #if the  vessel name s exist, find the location    
+    for k in range(len(df_head['key'])):           
+        if df_head['key'][k]=='Vessel Name' or df_head['key'][k]=='vessel name':
             EXIST=1
             LOC_V_NAME=k
+            break
     #fix the vessel name 
+    
     if EXIST==1:
-        df_head['Lowell'][LOC_V_NAME]=vessel_name
+        df_head['value'][LOC_V_NAME]=vessel_name
         new_head=df_head
     else:
+        
         new_head=pd.concat([df_head[:LOC_V_number+1],pd.DataFrame(data=[['Vessel Name',vessel_name]],columns=['Probe Type','Lowell']),df_head[LOC_V_number+1:]],ignore_index=True)
-    if new_head['Lowell'][LOC_V_number]=='99':
+    if new_head['value'][LOC_V_number]=='99':
         new_head=new_head.replace(vessel_name,'Test')
         print file       #if the file is test file,print it
       
     #creat the path and name of the new_file and the temperature file  
     output_path_name=file.replace(input_dir2,'output_data/data/'+vessel_name+'/').replace(file.split('/')[len(file.split('/'))-1],new_file)#the output path and the print file. 
     path_tem_file=input_dir+'df_tem.csv'
-    new_head.to_csv(output_path_name,index=0)
+    new_head.to_csv(output_path_name,header=0,index=0)
     df.to_csv(path_tem_file,index=0)
    
    #add the two file in one file
