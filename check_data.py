@@ -22,7 +22,6 @@ Lowell_SN_2='7a'        #the first two letters of Lowell_SN
 ##################################
 
 print 'the program is running'
-
 vessel_number_df=pd.read_csv(input_dir+vessel_number_file,names=['name','vessel_number']) 
 #get the files path and name
 file_lists=glob.glob(os.path.join(input_dir+input_dir2,'*.csv'))
@@ -38,8 +37,7 @@ for file in file_lists:
     original_file=pd.read_csv(file,nrows=12,names=['0','1','2','3','4','5'])
     for i in range(len(original_file['0'])):
         if original_file['0'][i]=='Depth':
-            header_rows=i
-            break    
+            header_rows=i  
     # now, read header and data     
     df=pd.read_csv(file,sep=',',skiprows=header_rows+1).dropna(axis=1,how='all') #data
     df_head=pd.read_csv(file,sep=',',nrows=header_rows).dropna(axis=1,how='all')  # header only
@@ -67,7 +65,6 @@ for file in file_lists:
                         df_head['Lowell'][j]=vessel_number_df['vessel_number'][i]
             else:
                 df_head['Lowell'][j]='99'
-            break
     
     #check the vessel name whether exist or right,if not,repair it
     EXIST=0   
@@ -76,7 +73,6 @@ for file in file_lists:
         if df_head['Probe Type'][k]=='Vessel Name' or df_head['Probe Type'][k]=='vessel name':
             EXIST=1
             LOC_V_NAME=k
-            break
     #fix the vessel name 
     
     if EXIST==1:
