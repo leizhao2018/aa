@@ -3,27 +3,30 @@
 Created on Mon Sep 24 11:15:59 2018
 -fix the filename such as 'li_da_20180608_153220.csv' to 'li_7ada_20180608_153220.csv'
 -standardize the lat and lon data format 
--Is the name_vessel right? not, correct it.
+-Is the vessel name right? not, correct it.
 -the vessel name is exist? if not,insert the name
+-add the VP_NUM to the header
 NOTICE:THE FILE NAME CAN'T HAVE THIS STR SUCH AS ')','(',' '.
 @author: leizhao
-modefied in Oct 3,2018
 """
 import pandas as pd
 import os
 import zlconvertions as zl
 
 #HARDCODES
+similarity=0.7
 mindepth=10 #minimum depth (meters) that a file must have to be considered usable
-input_dir='/home/jmanning/leizhao/data_file/input_data/check_data/test'  #the directory is the boat data folder
-output_dir='/home/jmanning/leizhao/data_file/output_data/check_data/test/test' #the directory is the path we need save the checed data 
+input_dir='/home/jmanning/leizhao/data_file/input_data/check_data'  #the directory is the boat data folder
+output_dir='/home/jmanning/leizhao/data_file/output_data/data/test' #the directory is the path we need save the checed data 
 vessel_number_path_file='/home/jmanning/leizhao/data_file/vessel_number.txt'      #this file contact vessel number and vessel name
+raw_data_name_file='/home/jmanning/leizhao/data_file/raw_data_name.txt'  
 Lowell_SN_2='7a'        #the first two letters of Lowell_SN
 ##################################
 
 print 'the program is running'
 #read the file of the vessel_number
 vessel_number_df=pd.read_csv(vessel_number_path_file,names=['name','vessel_number']) 
+raw_data_name_df=pd.read_csv(raw_data_name_file,sep='\t') 
 #get all the files under the input folder
 allfile_lists=zl.list_all_files(input_dir)
 
@@ -46,7 +49,7 @@ for file in file_lists:
     #fix the file name
     fname=file.split('/')[len(file.split('/'))-1]
     if len(fname.split('_')[1])==2:# if the serieal number is only 2 digits make it 4
-        new_fname=fname[:3]+Lowell_SN_2+fname[3:]   
+        new_fname=fname[:3]+Lowell_SN_2+fname[3:]
     else:
         new_fname=fname
     
@@ -59,19 +62,22 @@ for file in file_lists:
         
     # now, read header and data     
     df=pd.read_csv(file,sep=',',skiprows=header_rows).dropna(axis=1,how='all') #data
+    
     name=['key','value','value1','value2','value3','value4']
     df_head=pd.read_csv(file,sep=',',nrows=header_rows,names=name).dropna(axis=1,how='all')  # header only
+    df_headerr=pd.read_csv(file,sep=',',nrows=header_rows,names=name).dropna(axis=1,how='all')  # header only
     #the standard data have 6 columns, sometimes the data possible lack of the column of the HEADING.If lack, fixed it
     if len(df.iloc[0])==5: # some files didn't have the "DATA" in the first column
         df.insert(0,'HEADING','DATA')
     #keep the lat and lon data format is right,such as 00000.0000w to 0000.0000
-    for i in range(0,len(df['lat'])):
-        if len(str(df['lat'][i]).split('.')[0])>4 or 'A'<=str(df['lat'][i]).split('.')[1][len(str(df['lat'][i]).split('.')[1])-1:]<='Z':
-            df['lat'][i]=str(df['lat'][i]).split('.')[0][len(str(df['lat'][i]).split('.')[0])-4:]+'.'+str(df['lat'][i]).split('.')[1][:4]
-        if len(str(df['lon'][i]).split('.')[0])>4 or 'A'<=str(df['lon'][i]).split('.')[1][len(str(df['lon'][i]).split('.')[1])-1:]<='Z':
-            df['lon'][i]=str(df['lon'][i]).split('.')[0][len(str(df['lon'][i]).split('.')[0])-4:]+'.'+str(df['lon'][i]).split('.')[1][:4]
+    df.columns = ['HEADING','Datet(GMT)','Lat','Lon','Temperature(C)','Depth(m)']  #rename the name of conlum of data
+    for i in range(0,len(df['Lat'])):
+        if len(str(df['Lat'][i]).split('.')[0])>4 or 'A'<=str(df['Lat'][i]).split('.')[1][len(str(df['Lat'][i]).split('.')[1])-1:]<='Z':
+            df['Lat'][i]=str(df['Lat'][i]).split('.')[0][len(str(df['Lat'][i]).split('.')[0])-4:]+'.'+str(df['Lat'][i]).split('.')[1][:4]
+        if len(str(df['Lon'][i]).split('.')[0])>4 or 'A'<=str(df['Lon'][i]).split('.')[1][len(str(df['Lon'][i]).split('.')[1])-1:]<='Z':
+            df['Lon'][i]=str(df['Lon'][i]).split('.')[0][len(str(df['Lon'][i]).split('.')[0])-4:]+'.'+str(df['Lon'][i]).split('.')[1][:4]
     
-    #check the header file whether exist or right,if not,repair it
+#    check the header file whether exist or right,if not,repair it
     header_file_fixed_type=['Date Format','Time Format','Temperature','Depth'] 
     header_file_fixed_lowell=['YYYY-MM-DD','HH24:MI:SS','C','m']
     loc=0
@@ -88,8 +94,8 @@ for file in file_lists:
         loc=loc+1 
     #check if the data is the test data; Is the vessel number right?(test data's vessel number is 99)
     count=0
-    for i in range(len(df['Depth (m)'])):  #the value of count is 0 if the data is test data
-        count=count+(df['Depth (m)'][i]>mindepth)# keep track of # of depths>mindepth
+    for i in range(len(df['Depth(m)'])):  #the value of count is 0 if the data is test data
+        count=count+(df['Depth(m)'][i]>mindepth)# keep track of # of depths>mindepth
     vessel_name=fpath.split('/')[len(fpath.split('/'))-1:][0] #get the vessel name
     for j in range(len(df_head['value'])):
         if df_head['key'][j].lower()=='Vessel Number'.lower():
@@ -131,7 +137,21 @@ for file in file_lists:
     if S_number==1:
         if len(df_head['value'][loc_S_number].split(':'))>1:
             df_head['value'][loc_S_number]=df_head['value'][loc_S_number].replace(':','')
-    new_head=df_head
+    
+    for i in range(len(df_head['key'])):
+        if df_head['key'][i].lower()=='Vessel Number'.lower():
+            loc_vp_header=i+1
+            break
+    for i in range(len(raw_data_name_df['VESSEL_NAME'])):
+        ratio=zl.str_similarity_ratio(vessel_name.lower(),raw_data_name_df['VESSEL_NAME'][i].lower())
+        ratio_best=0
+        if ratio>similarity:
+            print ratio
+            if ratio>ratio_best:
+                ratio_best=ratio
+                loc_vp_file=i
+    new_head=pd.concat([df_head[:loc_vp_header],pd.DataFrame(data=[['VP_NUM',raw_data_name_df['VP_NUM'][loc_vp_file]]],columns=['key','value']),df_head[loc_vp_header:]],ignore_index=True)
+#    new_head=df_head
     if new_head['value'][LOC_V_number]=='99':
         new_head=new_head.replace(vessel_name,'Test')
         print file     #if the file is test file,print it
@@ -140,7 +160,7 @@ for file in file_lists:
     output_path=fpath.replace(input_dir,output_dir)
     if not os.path.exists(output_path):   #check the path of the save file is exist,make it if not
         os.makedirs(output_path)
-    df.columns = ['HEADING','Datet(GMT)','Lat','Lon','Temperature(C)','Depth(m)']  #rename the name of conlum of data
+
     path_tem_file=input_dir+'/df_tem.csv'
     new_head.to_csv(output_path+'/'+new_fname,index=0,header=0)
     df['Depth(m)'] = df['Depth(m)'].map(lambda x: '{0:.2f}'.format(float(x)))  #keep two decimal fraction
