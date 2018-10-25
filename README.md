@@ -1,5 +1,5 @@
 # check-the-data
-The function of check data:
+The function of check reformat data:
 1. Check the name of the data files, the name have the "Lowell-SN", and the lowell-sn have 4 alphabet;
    sometimes, the name lack of two alphabet, so, we need to complete it.
 2. Some longitude and latitude data is not the standard data(standard data is like 1234.1234). 
@@ -9,3 +9,11 @@ The function of check data:
    whether the vessel name is exist or the name is right, if not, insert it or fix it.
 4. Check the data is in standard format(the standard data have 6 columns).
    if not, it always lack the column of the "HEADING",so insert this column.
+   
+   the figure is:check reformat data.png
+   
+   
+The function of match_raw_raltime:
+      match the file and telementy.
+      we can known how many file send to the satallite
+
