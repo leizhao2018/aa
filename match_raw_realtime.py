@@ -18,15 +18,15 @@ import os
 #HARDCODES
 input_dir='/home/jmanning/Desktop/test1/te/checked_rawdata/Virginia_Marise/'   #THis folder
 output_dir='/home/jmanning/leizhao/'
-vessel_number='/home/jmanning/leizhao/data_file/vessel_number.txt'  
+vessel_number_file='/home/jmanning/leizhao/data_file/vessel_number.txt'  
 satellitedata='/home/jmanning/Desktop/test/telementry.txt'  
 acceptable_time_diff=timedelta(minutes=10)  #time threshold (mile)
 acceptable_distance_diff=1   #Distance threshold(mile)
 ############################
 
-vessel_number=pd.read_csv(vessel_number)   #get the data of vessel number
+vessel_number_df=pd.read_csv(vessel_number_file)   #get the data of vessel number
 #set the dataframe of output
-record_file=vessel_number.reindex(columns=['name','vessel','matched_number','start_time','end_time','tele_num_period','file_number','cent_tele_period','cent_match_vessel','tele_num'],fill_value=0)  
+record_file=vessel_number_df.reindex(columns=['name','vessel','matched_number','start_time','end_time','tele_num_period','file_number','cent_tele_period','cent_match_vessel','tele_num'],fill_value=0)  
 #get the data of telementry
 tele_df=pd.read_csv(satellitedata,sep=' ',names=['vessel_n','esn','month','day','Hours','minates','fracyrday','lon','lat','dum1','dum2','depth','rangedepth','timerange','temp','stdtemp','year'])
 allfile_lists=zl.list_all_files(input_dir)  #get all files of pointed folder
@@ -39,8 +39,8 @@ for file in allfile_lists:
 
 #start math raw file
 for file in file_lists:
-    df=zl.skip_to(file,'HEADING')  #only get the data in file
     file_header=zl.nrows_to(file,'Depth',['Probe Type','Lowell'])  #only get the header
+    df=zl.skip_to(file,'HEADING')  #only get the data in file
     dft=df.ix[(df['Depth(m)']>0.85*mean(df['Depth(m)']))]  #filter the data
     dft=dft.ix[2:]   #delay several minutes to let temperature sensor record the real bottom temp
     dft=dft.ix[(dft['Temperature(C)']>mean(dft['Temperature(C)'])-3*std(dft['Temperature(C)'])) & (dft['Temperature(C)']<mean(dft['Temperature(C)'])+3*std(dft['Temperature(C)']))]  #Excluding gross error
