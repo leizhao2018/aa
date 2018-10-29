@@ -10,12 +10,14 @@ The function of check reformat data:
 4. Check the data is in standard format(the standard data have 6 columns).
    if not, it always lack the column of the "HEADING",so insert this column.
    
-   the figure is:check reformat data.png
+  flowchart:check reformat data.png
    
    
-The function of match_raw_raltime:
+The function of match_raw_realtime:
 1. Get the start time and the end time of each raw folder data.
 2. Match the file and telementy. we can known how many file send to the satallite.
 3. Caculate the numbers of  succeesful matchs
 4. Caculate the numbers of transmissions during time of raw folder
 5. Caculate the percent of successful matching in raw folder and transmission
+
+flowchart:match_raw_realtime.png
