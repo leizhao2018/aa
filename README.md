@@ -14,6 +14,8 @@ The function of check reformat data:
    
    
 The function of match_raw_raltime:
-      match the file and telementy.
-      we can known how many file send to the satallite
-
+1. Get the start time and the end time of each raw folder data.
+2. Match the file and telementy. we can known how many file send to the satallite.
+3. Caculate the numbers of  succeesful matchs
+4. Caculate the numbers of transmissions during time of raw folder
+5. Caculate the percent of successful matching in raw folder and transmission
