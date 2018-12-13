@@ -125,9 +125,10 @@ else:
         for i in range(len(record_file_df)):
             if record_file_df['Vessel#'][i]==vessel_number:
                 if record_file_df['file_number'].isnull()[i]:
-                    record_file_df['file_number'][i]=record_file_df['file_number'][i]+1  
-                else:
                     record_file_df['file_number'][i]=1
+                else:
+                    record_file_df['file_number'][i]=record_file_df['file_number'][i]+1  
+                    
  
         #caculate the mean temperature and depth of every file
         value_data_df=data_df.ix[(data_df['Depth(m)']>0.85*mean(data_df['Depth(m)']))]  #filter the data
@@ -157,7 +158,7 @@ else:
                     if zl.dist(lat1=lat,lon1=lon,lat2=float(valuable_tele_df['lat'][i]),lon2=float(valuable_tele_df['lon'][i]))<=acceptable_distance_diff:  #distance match               
                         for j in range(len(record_file_df)):
                             if record_file_df['Vessel#'][j]==vessel_number:
-                                if record_file_df['matched_number'].isnull()[j]: #whether exists, exist is false
+                                if record_file_df['matched_number'].isnull()[j]:
                                     record_file_df['matched_number'][j]=1
                                     record_file_df['sum_diff_temp'][j]=abs(float(mean_temp)-float(valuable_tele_df['temp'][i]))
                                     record_file_df['max_diff_temp'][j]=abs(float(mean_temp)-float(valuable_tele_df['temp'][i]))
@@ -166,6 +167,7 @@ else:
                                     record_file_df['max_diff_depth'][j]=abs(float(mean_depth)-float(valuable_tele_df['depth'][i]))
                                     record_file_df['min_diff_depth'][j]=abs(float(mean_depth)-float(valuable_tele_df['depth'][i]))
                                     break
+                                    
                                 else:
                                     record_file_df['matched_number'][j]=record_file_df['matched_number'][j]+1
                                     record_file_df['sum_diff_temp'][j]=record_file_df['sum_diff_temp'][j]+abs(float(mean_temp)-float(valuable_tele_df['temp'][i]))
@@ -179,6 +181,7 @@ else:
                                     if record_file_df['min_diff_depth'][j]>abs(float(mean_depth)-float(valuable_tele_df['depth'][i])):
                                         record_file_df['min_diff_depth'][j]=abs(float(mean_depth)-float(valuable_tele_df['depth'][i]))
                                     break
+                                    
 
     #write 'time','mean_temp','mean_depth' of the telementry to tele_dict             
     for i in range(len(valuable_tele_df)):  #valuable_tele_df is the valuable telemetry data during start time and end time 
