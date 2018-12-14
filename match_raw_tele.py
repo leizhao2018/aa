@@ -23,7 +23,6 @@ time_interval=7    #unit: days
 acceptable_time_diff=datetime.timedelta(minutes=20)  #unite:mintues
 acceptable_distance_diff=2  #unit: miles
 telemetry_status='/home/jmanning/leizhao/data_file/telemetry_status - fitted .csv' # download from the telementry_status in web
-raw_data='/home/jmanning/leizhao/data_file/raw_data_name.txt'  #colude"VP_NUM", "HULL_NUM", "VESSEL_NAME"
 ########################
 
 
