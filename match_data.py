@@ -20,7 +20,7 @@ telemetry_status='/home/jmanning/leizhao/data_file/telemetry_status - fitted .cs
 ######################
 
 #if input directory is not empty, it will exit.
-if os.listdir(input_dir):
+if os.listdir(output_dir):
     print ('please input a empty directory!')
     sys.exit()
 #read the file of the telementry_status
