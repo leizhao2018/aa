@@ -12,52 +12,12 @@ import datetime
 import zlconversions as zl
 import pandas as pd
 from pylab import mean, std
-import matplotlib.pyplot as plt
 import conversions as cv
 import rawdatamoudles as rdm
 
-def draw(raw_data,tele_dict,i,start_time_local,end_time_local,path_picture_save,record_file):
-    fig=plt.figure()
-    fig.suptitle(i+'\n'+'successfully matched:'+str(record_file['matched_number'])+'   tele_num:'+\
-                         str(len(tele_dict))+'   raw_num:'+str(record_file['file_number']),fontsize=8, fontweight='bold')
-    ax2=fig.add_subplot(212)
-    fig.autofmt_xdate(bottom=0.18)
-    fig.subplots_adjust(left=0.18)
-    ax1=fig.add_subplot(211)    
-    if len(raw_data)>0 and len(tele_dict)>0:
-        ax2.plot_date(raw_data['time'],raw_data['mean_temp'],linestyle='-',alpha=0.5,label='raw_data',marker='d')
-        ax2.plot_date(tele_dict['time'],tele_dict['mean_temp'],linestyle='-',alpha=0.5,label='telementry',marker='^')
-        ax2.set_title('temperature different of min:'+str(round(record_file['min_diff_temp'],2))+'  max:'+str(round(record_file['max_diff_temp'],2))+\
-                          '  average:'+str(round(record_file['sum_diff_temp']/float(record_file['matched_number']),3)))
-        ax1.plot_date(raw_data['time'],raw_data['mean_depth'],linestyle='-',alpha=0.5,label='raw_data',marker='d')
-        ax1.plot_date(tele_dict['time'],tele_dict['mean_depth'],linestyle='-',alpha=0.5,label='telementry',marker='^')
-        ax1.set_title('depth different of min:'+str(round(record_file['min_diff_depth'],2))+'  max:'+str(round(record_file['max_diff_depth'],2))+\
-                          '  average:'+str(round(record_file['sum_diff_depth']/float(record_file['matched_number']),3)))
-    else:
-        labels='raw_data'
-        markers='d'
-        if len(tele_dict)>0:
-            raw_data=tele_dict
-            labels='telementry'
-            markers='^'   
-        ax1.plot_date(raw_data['time'],raw_data['mean_depth'],linestyle='-',alpha=0.5,label=labels,marker=markers)
-        ax2.plot_date(raw_data['time'],raw_data['mean_temp'],linestyle='-',alpha=0.5,label=labels,marker=markers)    
-    ax1.legend()
-    ax1.set_ylabel('depth(m)',fontsize=10)
-    ax1.axes.get_xaxis().set_visible(False)
-    ax1.axes.title.set_size(8)
-    ax1.set_xlim(start_time_local,end_time_local)
-    ax2.legend()
-    ax2.set_ylabel('C')
-    ax2.axes.title.set_size(8)
-    ax2.set_xlim(start_time_local,end_time_local)
-    if not os.path.exists(path_picture_save+'picture/'+i+'/'):
-        os.makedirs(path_picture_save+'picture/'+i+'/')
-    plt.savefig(path_picture_save+'picture/'+i+'/'+start_time_local.strftime('%Y-%m-%d')+'.png',dpi=300)
-
 #HARDCODES
 path_save='/home/jmanning/Desktop/testout/test/123/'#the path is the location of save picture and output file
-input_directory='/home/jmanning/Desktop/testout/test/checkeddata/'
+input_directory='/home/jmanning/Desktop/testout/test/checkeddata/'  #this path is the same as the output directory in check_reformat_data.py
 start_time='2018-12-3'   #file start time
 time_interval=7    #unit: days
 acceptable_time_diff=datetime.timedelta(minutes=20)  #unite:mintues
@@ -97,11 +57,11 @@ for file in allfile_lists:
         file_lists.append(file)
 #whether the data of file and telemetry is exist
 if len(valuable_tele_df)==0 and len(file_lists)==0: 
-    print('please check the data website of telementry and raw_data!')
+    print('please check the data website of telementry and the directory of raw_data is exist!')
 elif len(valuable_tele_df)==0:
     print('please check the data website of telementry!')
 elif len(file_lists)==0:
-    print('please check the data website of raw_data!')
+    print('please check the directory raw_data is exist!')
 else:
     #match the file
     index=telemetrystatus_df['Boat'] #set the index for dictionary
@@ -158,31 +118,31 @@ else:
                     if zl.dist(lat1=lat,lon1=lon,lat2=float(valuable_tele_df['lat'][i]),lon2=float(valuable_tele_df['lon'][i]))<=acceptable_distance_diff:  #distance match               
                         for j in range(len(record_file_df)):
                             if record_file_df['Vessel#'][j]==vessel_number:
+                                diff_temp=abs(float(mean_temp)-float(valuable_tele_df['temp'][i]))
+                                diff_depth=abs(float(mean_depth)-float(valuable_tele_df['depth'][i]))
                                 if record_file_df['matched_number'].isnull()[j]:
                                     record_file_df['matched_number'][j]=1
-                                    record_file_df['sum_diff_temp'][j]=abs(float(mean_temp)-float(valuable_tele_df['temp'][i]))
-                                    record_file_df['max_diff_temp'][j]=abs(float(mean_temp)-float(valuable_tele_df['temp'][i]))
-                                    record_file_df['min_diff_temp'][j]=abs(float(mean_temp)-float(valuable_tele_df['temp'][i]))
-                                    record_file_df['sum_diff_depth'][j]=abs(float(mean_depth)-float(valuable_tele_df['depth'][i]))
-                                    record_file_df['max_diff_depth'][j]=abs(float(mean_depth)-float(valuable_tele_df['depth'][i]))
-                                    record_file_df['min_diff_depth'][j]=abs(float(mean_depth)-float(valuable_tele_df['depth'][i]))
+                                    record_file_df['sum_diff_temp'][j]=diff_temp
+                                    record_file_df['max_diff_temp'][j]=diff_temp
+                                    record_file_df['min_diff_temp'][j]=diff_temp
+                                    record_file_df['sum_diff_depth'][j]=diff_depth
+                                    record_file_df['max_diff_depth'][j]=diff_depth
+                                    record_file_df['min_diff_depth'][j]=diff_depth
                                     break
-                                    
                                 else:
                                     record_file_df['matched_number'][j]=record_file_df['matched_number'][j]+1
-                                    record_file_df['sum_diff_temp'][j]=record_file_df['sum_diff_temp'][j]+abs(float(mean_temp)-float(valuable_tele_df['temp'][i]))
-                                    record_file_df['sum_diff_depth'][j]=record_file_df['sum_diff_depth'][j]+abs(float(mean_depth)-float(valuable_tele_df['depth'][i]))
-                                    if record_file_df['max_diff_temp'][j]<abs(float(mean_temp)-float(valuable_tele_df['temp'][i])):
-                                        record_file_df['max_diff_temp'][j]=abs(float(mean_temp)-float(valuable_tele_df['temp'][i]))
-                                    if record_file_df['min_diff_temp'][j]>abs(float(mean_temp)-float(valuable_tele_df['temp'][i])):
-                                        record_file_df['min_diff_temp'][j]=abs(float(mean_temp)-float(valuable_tele_df['temp'][i]))
-                                    if record_file_df['max_diff_depth'][j]<abs(float(mean_depth)-float(valuable_tele_df['depth'][i])):
-                                        record_file_df['max_diff_depth'][j]=abs(float(mean_depth)-float(valuable_tele_df['depth'][i]))
-                                    if record_file_df['min_diff_depth'][j]>abs(float(mean_depth)-float(valuable_tele_df['depth'][i])):
-                                        record_file_df['min_diff_depth'][j]=abs(float(mean_depth)-float(valuable_tele_df['depth'][i]))
+                                    record_file_df['sum_diff_temp'][j]=record_file_df['sum_diff_temp'][j]+diff_temp
+                                    record_file_df['sum_diff_depth'][j]=record_file_df['sum_diff_depth'][j]+diff_depth
+                                    if record_file_df['max_diff_temp'][j]<diff_temp:
+                                        record_file_df['max_diff_temp'][j]=diff_temp
+                                    if record_file_df['min_diff_temp'][j]>diff_temp:
+                                        record_file_df['min_diff_temp'][j]=diff_temp
+                                    if record_file_df['max_diff_depth'][j]<diff_depth:
+                                        record_file_df['max_diff_depth'][j]=diff_depth
+                                    if record_file_df['min_diff_depth'][j]>diff_depth:
+                                        record_file_df['min_diff_depth'][j]=diff_depth
                                     break
                                     
-
     #write 'time','mean_temp','mean_depth' of the telementry to tele_dict             
     for i in range(len(valuable_tele_df)):  #valuable_tele_df is the valuable telemetry data during start time and end time 
         for j in range(len(telemetrystatus_df)):
@@ -199,6 +159,6 @@ else:
         if len(raw_dict[i])==0 and len(tele_dict[i])==0:
             continue
         else:
-            draw(raw_dict[i],tele_dict[i],i,start_time_local,end_time_local,path_save,record_file_df.iloc[j])
+            rdm.draw(raw_dict[i],tele_dict[i],i,start_time_local,end_time_local,path_save,record_file_df.iloc[j])
     #save the record file
     record_file_df.to_csv(path_save+'record_file.csv',index=0) 
