@@ -435,4 +435,8 @@ def read_telemetry(path_name):
        'weather_code']
     for i in range(len(telemetrystatus_df)):
         telemetrystatus_df['Boat'][i]=telemetrystatus_df['Boat'][i].replace("'","")
+        if not telemetrystatus_df['Lowell-SN'].isnull()[i]:
+            telemetrystatus_df['Lowell-SN'][i]=telemetrystatus_df['Lowell-SN'][i].replace('，',',')
+        if not telemetrystatus_df['logger_change'].isnull()[i]:
+            telemetrystatus_df['logger_change'][i]=telemetrystatus_df['logger_change'][i].replace('，',',')
     return telemetrystatus_df
