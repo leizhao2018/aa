@@ -24,7 +24,7 @@ from pylab import mean, std
     
 def check_reformat_data(input_dir,output_dir,telemetry_status_file,raw_data_name_file,Lowell_SN_2='7a',similarity=0.7,mindepth=10):
     #read the file of the vessel_number
-    telemetrystatus_df=read_telemetry(telemetry_status_file)
+    telemetrystatus_df=read_telemetrystatus(telemetry_status_file)
     raw_data_name_df=pd.read_csv(raw_data_name_file,sep='\t') 
 
     #produce a dataframe that use to caculate the number of items
@@ -164,7 +164,7 @@ def classify_file(input_dir,output_dir,telemetry_status_path_name):
         print ('please input a empty directory!')
         sys.exit()
     #read the file of the telementry_status
-    df=read_telemetry(telemetry_status_path_name)
+    df=read_telemetrystatus(telemetry_status_path_name)
 
     #fix the format of time about logger_change
     for i in range(len(df)):
@@ -279,7 +279,7 @@ def match_tele_raw(input_dir,path_save,telemetry_status,start_time,time_interval
     we can known how many file send to the satallite and output the figure
     """
     #read the file of the telementry_status
-    telemetrystatus_df=read_telemetry(telemetry_status)
+    telemetrystatus_df=read_telemetrystatus(telemetry_status)
     #st the record file use to write minmum maxmum and average of depth and temperature,the numbers of file, telemetry and successfully matched
     record_file_df=telemetrystatus_df.loc[:,['Boat','Vessel#']].reindex(columns=['Boat','Vessel#','matched_number','file_number','tele_num',\
                                               'average_diff_depth','average_diff_temp','max_diff_depth','min_diff_depth',\
@@ -417,7 +417,7 @@ def match_tele_raw(input_dir,path_save,telemetry_status,start_time,time_interval
 
     
     
-def read_telemetry(path_name):
+def read_telemetrystatus(path_name):
     data=pd.read_csv(path_name)
     #find the data lines number in the file('telemetry_status.csv')
     for i in range(len(data['Unnamed: 0'])):
