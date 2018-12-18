@@ -25,7 +25,7 @@ out_number=5  #this file is not test file how many data out of mindepth in the f
 
 print ('the program is running')
 #read the file of the telementry_status
-telemetrystatus_df=rdm.read_telemetry(telemetry_status)
+telemetrystatus_df=rdm.read_telemetrystatus(telemetry_status)
 # produce a dataframe that use to caculate the number of items in every boat
 total_df=pd.concat([telemetrystatus_df.loc[:,['Boat']][:],pd.DataFrame(data=[['Total']],columns=['Boat'])],ignore_index=True) 
 total_df.insert(1,'file_total',0)
