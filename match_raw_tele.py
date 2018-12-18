@@ -27,7 +27,7 @@ telemetry_status='/home/jmanning/leizhao/data_file/telemetry_status - fitted .cs
 
 
 #read the file of the telementry_status
-telemetrystatus_df=rdm.read_telemetry(telemetry_status)
+telemetrystatus_df=rdm.read_telemetrystatus(telemetry_status)
 #set the output file"record_file" use to write minmum maxmum and average of depth and temperature,the numbers of file, telemetry and successfully matched
 record_file_df=telemetrystatus_df.loc[:,['Boat','Vessel#']].reindex(columns=['Boat','Vessel#','matched_number','file_number','tele_num','max_diff_depth',\
                                       'min_diff_depth','max_diff_temp','min_diff_temp','sum_diff_depth','sum_diff_temp'],fill_value=None)
