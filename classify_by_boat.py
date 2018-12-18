@@ -24,7 +24,7 @@ if os.listdir(input_dir):
     print ('please input a empty directory!')
     sys.exit()
 #read the file of the telementry_status
-telemetry_status_df=rdm.read_telemetry(telemetry_status)
+telemetry_status_df=rdm.read_telemetrystatus(telemetry_status)
 #fix the format of time about logger_change
 for i in range(len(telemetry_status_df)):
     if not telemetry_status_df['logger_change'].isnull()[i]:
