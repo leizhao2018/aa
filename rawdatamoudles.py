@@ -426,10 +426,10 @@ def read_telemetrystatus(path_name):
             break
     #read the data about "telemetry_status.csv"
     telemetrystatus_df=pd.read_csv(path_name,nrows=data_line_number)
-    telemetrystatus_df.columns=['Boat', 'Vessel#', 'Funding', 'Program', 'Captain',
+    telemetrystatus_df.columns=['Boat', 'Status (as 13 Nov 2018)','Vessel#', 'Funding', 'Program', 'Captain',
        'email address', 'phone', 'Port', 'Techs', 'Visit_Dates for telemetry',
-       'Status (as 13 Nov 2018)', 'Aquatec-SN', 'Lowell-SN', 'logger_change',
-       'ESN', 'wifi?', 'wants weather?',
+       'Aquatec-SN', 'Lowell-SN', 'logger_change',
+       'ESN','Other ESNs used', 'wifi?', 'wants weather?',
        'Notes (see individual tabs for historical notes)', 'add mail address!',
        'LI Firmware', 'image_file}', 'Fixed vs. Mobile', 'AP3 Batch',
        'weather_code']
