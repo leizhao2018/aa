@@ -151,7 +151,7 @@ def check_reformat_data(input_dir,output_dir,telemetry_status_file,raw_data_name
 #    #caculate the total of all files and print save as a file.
     try:
         for i in range(len(total_df['file_total'])):
-            total_df['file_total'][0]=total_df['file_total'][0]+total_df['file_total'][i]
+            total_df['file_total'][len(total_df['file_total'])-1]=total_df['file_total'][0]+total_df['file_total'][i]
         total_df.to_csv(output_dir+'/items_number.txt',index=0)
     except:
         print("no valuable file!")
