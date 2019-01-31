@@ -271,20 +271,24 @@ def draw(raw_dict,tele_dict,i,start_time_local,end_time_local,path_picture_save,
 #    ax2.set_ylim(np.nanmax(raw_dict['mean_depth'].values),np.nanmin(raw_dict['mean_depth'].values))
     ax2.axes.title.set_size(8)
     ax2.set_xlim(start_time_local,end_time_local)
+    ax2.tick_params(labelsize=6)
     ax22=ax2.twinx()
     ax22.set_ylabel('depth(feet)',fontsize=10)
     ax22.set_ylim(np.nanmax(raw_dict['mean_depth'].values)*3.28084,np.nanmin(raw_dict['mean_depth'].values)*3.28084)
     ax22.invert_yaxis()
+    ax22.tick_params(labelsize=6)
     
     ax1.legend()
     ax1.set_ylabel('Celius')  
     ax1.axes.title.set_size(8)
     ax1.set_xlim(start_time_local,end_time_local)
     ax1.axes.get_xaxis().set_visible(False)
+    ax1.tick_params(labelsize=6)
     ax12=ax1.twinx()
     ax12.set_ylabel('Fahrenheit',fontsize=10)
     ax12.set_ylim(np.nanmax(raw_dict['mean_temp'].values)*1.8+32,np.nanmin(raw_dict['mean_temp'].values)*1.8+32)
     ax12.invert_yaxis()
+    ax12.tick_params(labelsize=6)
 
     
     if not os.path.exists(path_picture_save+'/picture/'+i+'/'):
