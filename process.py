@@ -23,7 +23,7 @@ end_time_str='2018-12-31'
 
 telemetry_status='/home/jmanning/leizhao/data_file/telemetry_status.csv'
 
-#way1:
+#way1:  #if we want to use way 1,we need 37-64 codes under the way1 loops
 #interval=30   #day
 #num=(datetime.strptime(end_time_str,'%Y-%m-%d')-datetime.strptime(start_time_str,'%Y-%m-%d')).days
 #for i in range(int(num/interval)):
