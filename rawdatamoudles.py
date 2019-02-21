@@ -2,6 +2,7 @@
 """
 Created on Wed Oct  3 12:39:15 2018
 update 2/21 2019
+rename the function name of draw to draw_time_series_plot
 update some the draw_time_series_plot fix the label of y axis
 @author: leizhao
 """
