@@ -6,6 +6,8 @@ funtion, contact the raw_data_download.py,classify_by_boat.py
 check_reformat_data.py and match_tele_raw.py
 finally: output the plot and statistics every week
 
+update(feb21 2019):
+update the function name draw to draw_time_series_plot and update the codes of time seriers plot and draw location map
 @author: leizhao
 """
 
