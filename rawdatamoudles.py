@@ -1,8 +1,8 @@
 
-
 """
 Created on Wed Oct  3 12:39:15 2018
-
+update 2/21 2019
+update some the draw_time_series_plot fix the label of y axis
 @author: leizhao
 """
 import conversions as cv
@@ -16,10 +16,23 @@ import sys
 import zlconversions as zl
 from datetime import datetime,timedelta
 from pylab import mean, std
+import conda
+conda_file_dir = conda.__file__
+conda_dir = conda_file_dir.split('lib')[0]
+proj_lib = os.path.join(os.path.join(conda_dir, 'share'), 'proj')
+os.environ["PROJ_LIB"] = proj_lib
+from mpl_toolkits.basemap import Basemap
+import time
 #HARDCODES
 
     
 def check_reformat_data(input_dir,output_dir,telemetry_status_file,raw_data_name_file,Lowell_SN_2='7a',similarity=0.7,mindepth=10):
+    """
+    check reformat of data
+    check:vessel name,vessel number,serial number, lat,lon
+    add VP_NUM
+    if the file is test file, continue next file
+    """
     #read the file of the vessel_number
     telemetrystatus_df=read_telemetrystatus(telemetry_status_file)
     raw_data_name_df=pd.read_csv(raw_data_name_file,sep='\t') 
@@ -202,7 +215,7 @@ def classify_by_boat(input_dir,output_dir,telemetry_status_path_name):
                         fpath,fname=os.path.split(file)    #seperate the path and name of the file
                         dstfile=(fpath).replace(input_dir,output_dir+'/'+df['Boat'][i]+'/'+fname) #produce the path+filename of the destination
                         dstfile=dstfile.replace('//','/')
-                        
+            
                         #copy the file to the destination folder
                         try:
                             if j<len(df['logger_change'][i])-1:
@@ -215,6 +228,7 @@ def classify_by_boat(input_dir,output_dir,telemetry_status_path_name):
                             print("please check the data of telemetry status!")
 
 def download(save_path,start_time=datetime.strptime('2000-1-1','%Y-%m-%d'),end_time=datetime.now()):
+    """download the rawdata from web"""
     ftp=ftplib.FTP('66.114.154.52','huanxin','123321')
     print ('Logging in.')
     ftp.cwd('/Matdata')
@@ -238,80 +252,185 @@ def download(save_path,start_time=datetime.strptime('2000-1-1','%Y-%m-%d'),end_t
     ftp.quit() # This is the “polite” way to close a connection
     print ('New files downloaded')
     
-def draw(raw_dict,tele_dict,i,start_time_local,end_time_local,path_picture_save,record_file,dpi=300):
-    raw_dict['mean_depth']=-1*raw_dict['mean_depth']
-    tele_dict['mean_depth']=-1*tele_dict['mean_depth']
-    fig=plt.figure()
-    fig.suptitle(i+'\n'+'matches:'+str(int(record_file['matched_number']))+'   telemetered:'+\
+def draw_time_series_plot(raw_dict,tele_dict,name,start_time_local,end_time_local,path_picture_save,record_file,dpi=300):
+    """use to draw the time series plot"""
+    
+    fig=plt.figure(figsize=(7,4))
+    fig.suptitle(name+'\n'+'matches:'+str(int(record_file['matched_number']))+'   telemetered:'+\
                          str(int(record_file['tele_num']))+'   raw_data_uploaded:'+str(int(record_file['file_number'])),fontsize=8, fontweight='bold')
     ax2=fig.add_subplot(212)
-    fig.autofmt_xdate(bottom=0.18)
+#    fig.autofmt_xdate(bottom=0.18)
     fig.subplots_adjust(left=0.10)
     ax1=fig.add_subplot(211)    
     if len(raw_dict)>0 and len(tele_dict)>0:
+        tele_dict['mean_depth']=-1*tele_dict['mean_depth']
+        raw_dict['mean_depth']=-1*raw_dict['mean_depth']
         ax1.plot_date(raw_dict['time'],raw_dict['mean_temp'],linestyle='-',alpha=0.5,label='raw_data',marker='d')
-        ax1.plot_date(tele_dict['time'],tele_dict['mean_temp'],linestyle='-',alpha=0.5,label='telementry',marker='^')
-        ax1.set_title('temperature differences of min:'+str(round(record_file['min_diff_temp'],2))+'  max:'+str(round(record_file['max_diff_temp'],2))+\
-                          '  average:'+str(round(record_file['sum_diff_temp']/float(record_file['matched_number']),3)))
+        ax1.plot_date(tele_dict['time'],tele_dict['mean_temp'],linestyle='-',alpha=0.5,label='telemetry',marker='^')
+        if record_file['matched_number']!=0:
+            ax1.set_title('temperature differences of min:'+str(round(record_file['min_diff_temp'],2))+'  max:'+str(round(record_file['max_diff_temp'],2))+\
+                          '  average:'+str(round(record_file['average_diff_temp'],3)))
         ax2.plot_date(raw_dict['time'],raw_dict['mean_depth'],linestyle='-',alpha=0.5,label='raw_data',marker='d')
-        ax2.plot_date(tele_dict['time'],tele_dict['mean_depth'],linestyle='-',alpha=0.5,label='telementry',marker='^')
-        ax2.set_title('depth differences of min:'+str(round(record_file['min_diff_depth'],2))+'  max:'+str(round(record_file['max_diff_depth'],2))+\
-                          '  average:'+str(round(record_file['sum_diff_depth']/float(record_file['matched_number']),3)))
+        ax2.plot_date(tele_dict['time'],tele_dict['mean_depth'],linestyle='-',alpha=0.5,label='telemetry',marker='^')
+        if record_file['matched_number']!=0:
+            ax2.set_title('depth differences of min:'+str(round(record_file['min_diff_depth'],2))+'  max:'+str(round(record_file['max_diff_depth'],2))+\
+                          '  average:'+str(round(record_file['average_diff_depth'],3)))
+        max_temp=max(np.nanmax(raw_dict['mean_temp'].values),np.nanmax(tele_dict['mean_temp'].values))
+        min_temp=min(np.nanmin(raw_dict['mean_temp'].values),np.nanmin(tele_dict['mean_temp'].values))
+        max_depth=max(np.nanmax(raw_dict['mean_depth'].values),np.nanmax(tele_dict['mean_depth'].values))
+        min_depth=min(np.nanmin(raw_dict['mean_depth'].values),np.nanmin(tele_dict['mean_depth'].values))
     else:
         labels='raw_data'
         markers='d'
         if len(tele_dict)>0:
             raw_dict=tele_dict
-            labels='telementered'
-            markers='^'   
+            labels='telemetered'
+            markers='^'  
+        raw_dict['mean_depth']=-1*raw_dict['mean_depth']
         ax2.plot_date(raw_dict['time'],raw_dict['mean_depth'],linestyle='-',alpha=0.5,label=labels,marker=markers)
         ax1.plot_date(raw_dict['time'],raw_dict['mean_temp'],linestyle='-',alpha=0.5,label=labels,marker=markers)    
+        max_temp=np.nanmax(raw_dict['mean_temp'].values)
+        min_temp=np.nanmin(raw_dict['mean_temp'].values)
+        max_depth=np.nanmax(raw_dict['mean_depth'].values)
+        min_depth=np.nanmin(raw_dict['mean_depth'].values)
+    diff_temp=max_temp-min_temp
+    diff_depth=max_depth-min_depth
+    if diff_temp==0:
+        textend_lim=0.1
+    else:
+        textend_lim=diff_temp/8.0
+    if diff_depth==0:
+        dextend_lim=0.1
+    else:
+        dextend_lim=diff_depth/8.0  
     ax2.legend()
-    ax2.set_ylabel('depth(m)',fontsize=10)
-#    ax2.set_ylim(np.nanmax(raw_dict['mean_depth'].values),np.nanmin(raw_dict['mean_depth'].values))
+    ax2.set_ylabel('depth(m)',fontsize=8)
+    ax2.set_ylim(min_depth-dextend_lim,max_depth+dextend_lim)
     ax2.axes.title.set_size(8)
     ax2.set_xlim(start_time_local,end_time_local)
     ax2.tick_params(labelsize=6)
     ax22=ax2.twinx()
-    ax22.set_ylabel('depth(feet)',fontsize=10)
-    ax22.set_ylim(np.nanmax(raw_dict['mean_depth'].values)*3.28084,np.nanmin(raw_dict['mean_depth'].values)*3.28084)
+    ax22.set_ylabel('depth(feet)',fontsize=8)
+    ax22.set_ylim((max_depth+dextend_lim)*3.28084,(min_depth-dextend_lim)*3.28084)
     ax22.invert_yaxis()
     ax22.tick_params(labelsize=6)
-    
     ax1.legend()
-    ax1.set_ylabel('Celius')  
+    ax1.set_ylabel('Celius',fontsize=8)  
+    ax1.set_ylim(min_temp-textend_lim,max_temp+textend_lim)
     ax1.axes.title.set_size(8)
     ax1.set_xlim(start_time_local,end_time_local)
     ax1.axes.get_xaxis().set_visible(False)
     ax1.tick_params(labelsize=6)
     ax12=ax1.twinx()
     ax12.set_ylabel('Fahrenheit',fontsize=10)
-    ax12.set_ylim(np.nanmax(raw_dict['mean_temp'].values)*1.8+32,np.nanmin(raw_dict['mean_temp'].values)*1.8+32)
+    #conversing the Celius to Fahrenheit
+    ax12.set_ylim((max_temp+textend_lim)*1.8+32,(min_temp-textend_lim)*1.8+32)
     ax12.invert_yaxis()
     ax12.tick_params(labelsize=6)
+    
+    if not os.path.exists(path_picture_save+'/picture/'+name+'/'):
+        os.makedirs(path_picture_save+'/picture/'+name+'/')
+    plt.savefig(path_picture_save+'/picture/'+name+'/'+start_time_local.strftime('%Y-%m-%d')+'_'+end_time_local.strftime('%Y-%m-%d')+'.png',dpi=dpi)
 
+
+def draw_map(raw_dict,tele_dict,name,start_time_local,end_time_local,path_picture_save,record_file,dpi=300):
+    """use to draw the location of raw file and telemetered produced"""
+    #creat map
+    #Create a blank canvas  
+    fig=plt.figure(figsize=(8,8.5))
+    fig.suptitle('F/V '+name,fontsize=24, fontweight='bold')
+
+    ax=fig.add_axes([0.02,0.02,0.9,0.9])
+    ax.set_title(start_time_local.strftime('%Y-%m-%d')+'-'+end_time_local.strftime('%Y-%m-%d'))
+    ax.axes.title.set_size(16)
     
-    if not os.path.exists(path_picture_save+'/picture/'+i+'/'):
-        os.makedirs(path_picture_save+'/picture/'+i+'/')
-    plt.savefig(path_picture_save+'/picture/'+i+'/'+start_time_local.strftime('%Y-%m-%d')+'_'+end_time_local.strftime('%Y-%m-%d')+'.png',dpi=dpi)
+    min_lat=record_file['min_lat']
+    max_lat=record_file['max_lat']
+    max_lon=record_file['max_lon']
+    min_lon=record_file['min_lon']
+    #keep the max_lon-min_lon>=2
+    if (max_lon-min_lon)<=2:
+        max_lon=1-(max_lon-min_lon)/2.0+(max_lon+min_lon)/2.0
+        min_lon=max_lon-2
+    #adjust the max and min,let map have the same width and height 
+    if (max_lon-min_lon)>(max_lat-min_lat):
+        max_lat=max_lat+((max_lon-min_lon)-(max_lat-min_lat))/2.0
+        min_lat=min_lat-((max_lon-min_lon)-(max_lat-min_lat))/2.0
+    else:
+        max_lon=max_lon+((max_lat-min_lat)-(max_lon-min_lon))/2.0
+        min_lon=min_lon-((max_lat-min_lat)-(max_lon-min_lon))/2.0
+    #if there only one data in there
     
+    
+    while(not zl.isConnected()):
+        time.sleep(120)
+    try:
+        service = 'Ocean_Basemap'
+        xpixels = 5000 
+        #Build a map background
+        map=Basemap(projection='mill',llcrnrlat=min_lat-0.1,urcrnrlat=max_lat+0.1,llcrnrlon=min_lon-0.1,urcrnrlon=max_lon+0.1,\
+                resolution='f',lat_0=(record_file['min_lat']+record_file['max_lat'])/2.0,lon_0=(record_file['max_lon']+record_file['min_lon'])/2.0,epsg = 4269)
+        map.arcgisimage(service=service, xpixels = xpixels, verbose= False)
+        if max_lat-min_lat>=3:
+            step=int((max_lat-min_lat)/5.0*10)/10.0
+        else:
+            step=0.5
+        
+        # draw parallels.
+        parallels = np.arange(0.,90.0,step)
+        map.drawparallels(parallels,labels=[0,1,0,0],fontsize=10,linewidth=0.0)
+        # draw meridians
+        meridians = np.arange(180.,360.,step)
+        map.drawmeridians(meridians,labels=[0,0,0,1],fontsize=10,linewidth=0.0)
+    
+        #Draw a scatter plot
+        if len(raw_dict)>0 and len(raw_dict)>0:
+            raw_lat,raw_lon=to_list(raw_dict['mean_lat'],raw_dict['mean_lon'])
+            raw_x,raw_y=map(raw_lon,raw_lat)
+            ax.plot(raw_x,raw_y,'ro',markersize=6,alpha=0.5,label='raw_data')
+            tele_lat,tele_lon=to_list(tele_dict['mean_lat'],tele_dict['mean_lon'])
+            tele_x,tele_y=map(tele_lon,tele_lat)
+            ax.plot(tele_x,tele_y,'b*',markersize=6,alpha=0.5,label='telemetry')
+            ax.legend()
+        else:
+            if len(raw_dict)>0:
+                raw_lat,raw_lon=to_list(raw_dict['mean_lat'],raw_dict['mean_lon'])
+                raw_x,raw_y=map(raw_lon,raw_lat)
+                ax.plot(raw_x,raw_y,'ro',markersize=6,alpha=0.5,label='raw_data')
+                ax.legend()
+            else:
+                tele_lat,tele_lon=to_list(tele_dict['mean_lat'],tele_dict['mean_lon'])
+                tele_x,tele_y=map(tele_lon,tele_lat)
+                ax.plot(tele_x,tele_y,'b*',markersize=6,alpha=0.5,label='telemetry')
+                ax.legend()
+    
+        if not os.path.exists(path_picture_save+'/picture/'+name+'/'):
+            os.makedirs(path_picture_save+'/picture/'+name+'/')
+        plt.savefig(path_picture_save+'/picture/'+name+'/'+'location'+'_'+start_time_local.strftime('%Y-%m-%d')+'_'+end_time_local.strftime('%Y-%m-%d')+'.png',dpi=dpi)
+        print(name+' finished draw!')
+    except:
+        print(name+' need redraw!')
+ 
     
 def format_lat_lon(data):
+    """fix the data of lat and lon"""
     if len(str(data).split('.')[0])>4 or 'A'<=str(data).split('.')[1][len(str(data).split('.')[1])-1:]<='Z':
         data=str(data).split('.')[0][len(str(data).split('.')[0])-4:]+'.'+str(data).split('.')[1][:4]
     return data
+
+
 def match_tele_raw(input_dir,path_save,telemetry_status,start_time,end_time,telemetry_path='https://www.nefsc.noaa.gov/drifter/emolt.dat',accept_minutes_diff=20,acceptable_distance_diff=2,dpi=300):
     """
     match the file and telementy.
     we can known how many file send to the satallite and output the figure
     """
-    if not os.path.exists(path_save):
-        os.makedirs(path_save)
+
     #read the file of the telementry_status
     telemetrystatus_df=read_telemetrystatus(telemetry_status)
     #st the record file use to write minmum maxmum and average of depth and temperature,the numbers of file, telemetry and successfully matched
     record_file_df=telemetrystatus_df.loc[:,['Boat','Vessel#']].reindex(columns=['Boat','Vessel#','matched_number','file_number','tele_num','max_diff_depth',\
-                                      'min_diff_depth','average_diff_depth','max_diff_temp','min_diff_temp','average_diff_temp','sum_diff_depth','sum_diff_temp'],fill_value=None)
+                                      'min_diff_depth','average_diff_depth','max_diff_temp','min_diff_temp','average_diff_temp','sum_diff_depth','sum_diff_temp',\
+                                      'min_lat','max_lat','min_lon','max_lon'],fill_value=None)
     #transfer the time format of string to datetime 
     start_time_local=datetime.strptime(start_time,'%Y-%m-%d')
     end_time_local=datetime.strptime(end_time,'%Y-%m-%d')
@@ -347,36 +466,56 @@ def match_tele_raw(input_dir,path_save,telemetry_status,start_time,end_time,tele
     raw_dict={}    #the dictinary about raw data, use to write the data about 'time','filename','mean_temp','mean_depth'
     tele_dict={}  #the dictionary about telementry data,use to write the data about'time','mean_temp','mean_depth'
     for i in range(len(index)):  #loop every boat
-        raw_dict[index[i]]=pd.DataFrame(data=None,columns=['time','filename','mean_temp','mean_depth'])
-        tele_dict[index[i]]=pd.DataFrame(data=None,columns=['time','mean_temp','mean_depth'])
+        raw_dict[index[i]]=pd.DataFrame(data=None,columns=['time','filename','mean_temp','mean_depth','mean_lat','mean_lon'])
+        tele_dict[index[i]]=pd.DataFrame(data=None,columns=['time','mean_temp','mean_depth','mean_lat','mean_lon'])
     for file in file_lists: # loop raw files
         fpath,fname=os.path.split(file)  #get the file's path and name
         # now, read header and data of every file  
         header_df=zl.nrows_len_to(file,2,name=['key','value']) #only header 
         data_df=zl.skip_len_to(file,2) #only data
         
-        #get the vessel number of every file
-        for i in range(len(header_df)):
-            if header_df['key'][i].lower()=='vessel number'.lower():
-                vessel_number=int(header_df['value'][i])
-                break
-        #caculate the number of raw files in every vessel
-        for i in range(len(record_file_df)):
-            if record_file_df['Vessel#'][i]==vessel_number:
-                if record_file_df['file_number'].isnull()[i]:
-                    record_file_df['file_number'][i]=1
-                else:
-                    record_file_df['file_number'][i]=int(record_file_df['file_number'][i]+1)
-                    
- 
         #caculate the mean temperature and depth of every file
         value_data_df=data_df.ix[(data_df['Depth(m)']>0.85*mean(data_df['Depth(m)']))]  #filter the data
         value_data_df=value_data_df.ix[2:]   #delay several minutes to let temperature sensor record the real bottom temp
         value_data_df=value_data_df.ix[(value_data_df['Temperature(C)']>mean(value_data_df['Temperature(C)'])-3*std(value_data_df['Temperature(C)'])) & \
                    (value_data_df['Temperature(C)']<mean(value_data_df['Temperature(C)'])+3*std(value_data_df['Temperature(C)']))]  #Excluding gross error
         value_data_df.index = range(len(value_data_df))  #reindex
+        for i in range(len(value_data_df['Lat'])):
+            value_data_df['Lat'][i],value_data_df['Lon'][i]=cv.dm2dd(value_data_df['Lat'][i],value_data_df['Lon'][i])
+        min_lat=min(value_data_df['Lat'].values)
+        max_lat=max(value_data_df['Lat'].values)
+        min_lon=min(value_data_df['Lon'].values)
+        max_lon=max(value_data_df['Lon'].values)
+        mean_lat=str(round(mean(value_data_df['Lat'].values),4))
+        mean_lon=str(round(mean(value_data_df['Lon'].values),4)) #caculate the mean depth
         mean_temp=str(round(mean(value_data_df['Temperature(C)'][1:len(value_data_df)]),2))
         mean_depth=str(abs(int(round(mean(value_data_df['Depth(m)'].values))))).zfill(3)   #caculate the mean depth
+        
+        #get the vessel number of every file
+        for i in range(len(header_df)):
+            if header_df['key'][i].lower()=='vessel number'.lower():
+                vessel_number=int(header_df['value'][i])
+                break
+        #caculate the number of raw files in every vessel,and min,max of lat and lon
+        for i in range(len(record_file_df)):
+            if record_file_df['Vessel#'][i]==vessel_number:
+                if record_file_df['file_number'].isnull()[i]:
+                    record_file_df['min_lat'][i]=min_lat
+                    record_file_df['max_lat'][i]=max_lat
+                    record_file_df['min_lon'][i]=min_lon
+                    record_file_df['max_lon'][i]=max_lon
+                    record_file_df['file_number'][i]=1
+                else:
+                    record_file_df['file_number'][i]=int(record_file_df['file_number'][i]+1)
+                    if record_file_df['min_lat'][i]>min_lat:
+                        record_file_df['min_lat'][i]=min_lat
+                    if record_file_df['max_lat'][i]<max_lat:
+                        record_file_df['max_lat'][i]=max_lat
+                    if record_file_df['min_lon'][i]>min_lon:
+                        record_file_df['min_lon'][i]=min_lon
+                    if record_file_df['max_lon'][i]<max_lon:
+                        record_file_df['max_lon'][i]=max_lon
+       
         
         #match rawdata and telementry data
         time_str=fname.split('.')[0].split('_')[2]+' '+fname.split('.')[0].split('_')[3]
@@ -384,12 +523,12 @@ def match_tele_raw(input_dir,path_save,telemetry_status,start_time,end_time,tele
         time_local=zl.gmt_to_eastern(time_str[0:4]+'-'+time_str[4:6]+'-'+time_str[6:8]+' '+time_str[9:11]+':'+time_str[11:13]+':'+time_str[13:15]) 
         time_gmt=datetime.strptime(time_str,"%Y%m%d %H%M%S")
         #transfer the format latitude and longitude
-        lat,lon=cv.dm2dd(value_data_df['Lat'][len(value_data_df)-1],value_data_df['Lon'][len(value_data_df)-1]) 
+        lat,lon=value_data_df['Lat'][len(value_data_df)-1],value_data_df['Lon'][len(value_data_df)-1]
         #write the data of raw file to dict
         for i in range(len(telemetrystatus_df)):
             if telemetrystatus_df['Vessel#'][i]==vessel_number:
                 raw_dict[telemetrystatus_df['Boat'][i]]=raw_dict[telemetrystatus_df['Boat'][i]].append(pd.DataFrame(data=[[time_local,\
-                                    fname,float(mean_temp),float(mean_depth)]],columns=['time','filename','mean_temp','mean_depth']).iloc[0],ignore_index=True) 
+                                    fname,float(mean_temp),float(mean_depth),float(mean_lat),float(mean_lon)]],columns=['time','filename','mean_temp','mean_depth','mean_lat','mean_lon']).iloc[0],ignore_index=True) 
         #caculate the numbers of successful matchs and the minimum,maximum and average different of temperature and depth, and write this data to record file
         for i in range(len(valuable_tele_df)):
             if valuable_tele_df['vessel_n'][i].split('_')[1]==str(vessel_number):     
@@ -423,7 +562,6 @@ def match_tele_raw(input_dir,path_save,telemetry_status,start_time,end_time,tele
                                     break
                                     
     #write 'time','mean_temp','mean_depth' of the telementry to tele_dict             
-    
     for i in range(len(valuable_tele_df)):  #valuable_tele_df is the valuable telemetry data during start time and end time 
         for j in range(len(telemetrystatus_df)):
             if int(valuable_tele_df['vessel_n'][i].split('_')[1])==telemetrystatus_df['Vessel#'][j]:
@@ -432,10 +570,24 @@ def match_tele_raw(input_dir,path_save,telemetry_status,start_time,end_time,tele
                     record_file_df['tele_num'][j]=1
                 else:
                     record_file_df['tele_num'][j]=record_file_df['tele_num'][j]+1
+                if record_file_df['max_lat'].isnull()[j]:
+                    record_file_df['min_lat'][j]=valuable_tele_df['lat'][i]
+                    record_file_df['max_lat'][j]=valuable_tele_df['lat'][i]
+                    record_file_df['min_lon'][j]=valuable_tele_df['lon'][i]
+                    record_file_df['max_lon'][j]=valuable_tele_df['lon'][i]
+                else:
+                    if record_file_df['min_lat'][j]>valuable_tele_df['lat'][i]:
+                        record_file_df['min_lat'][j]=valuable_tele_df['lat'][i]
+                    if record_file_df['max_lat'][j]<valuable_tele_df['lat'][i]:
+                        record_file_df['max_lat'][j]=valuable_tele_df['lat'][i]
+                    if record_file_df['min_lon'][j]>valuable_tele_df['lon'][i]:
+                        record_file_df['min_lon'][j]=valuable_tele_df['lon'][i]
+                    if record_file_df['max_lon'][j]<valuable_tele_df['lon'][i]:
+                        record_file_df['max_lon'][j]=valuable_tele_df['lon'][i]
                 #write 'time','mean_temp','mean_depth' of the telementry to tele_dict
                 tele_dict[telemetrystatus_df['Boat'][j]]=tele_dict[telemetrystatus_df['Boat'][j]].append(pd.DataFrame(data=[[valuable_tele_df['time'][i],\
-                         float(valuable_tele_df['temp'][i]),float(valuable_tele_df['depth'][i])]],columns=['time','mean_temp','mean_depth']).iloc[0],ignore_index=True)
-    
+                         float(valuable_tele_df['temp'][i]),float(valuable_tele_df['depth'][i]),float(valuable_tele_df['lat'][i]),float(valuable_tele_df['lon'][i])]],columns=['time','mean_temp','mean_depth','mean_lat','mean_lon']).iloc[0],ignore_index=True)
+    print("finish the calculate of min_lat and min_lon!")
     for i in range(len(record_file_df)):
         if not record_file_df['matched_number'].isnull()[i]:
             record_file_df['average_diff_depth'][i]=round(record_file_df['sum_diff_depth'][i]/record_file_df['matched_number'][i],4)
@@ -446,26 +598,19 @@ def match_tele_raw(input_dir,path_save,telemetry_status,start_time,end_time,tele
             record_file_df['tele_num'][i]=0
         if record_file_df['file_number'].isnull()[i]:
             record_file_df['file_number'][i]=0
-    #draw the picture of result
+    
     for i in index:#loop every boat,  i represent the name of boat
-        for j in range(len(record_file_df)): #find the location of data of this boat in record file 
-            if i.lower()==record_file_df['Boat'][j].lower():
-                break
         raw_dict[i]=raw_dict[i].sort_values(by=['time'])
         raw_dict[i].index=range(len(raw_dict[i]))
-        if len(raw_dict[i])==0 and len(tele_dict[i])==0:
-            continue
-        else:
-            draw(raw_dict[i],tele_dict[i],i,start_time_local,end_time_local,path_save,record_file_df.iloc[j],dpi=dpi)
 
     record_file_df=record_file_df.drop(['sum_diff_depth','sum_diff_temp'],axis=1)
     #save the record file
     record_file_df.to_csv(path_save+'/'+start_time+'_'+end_time+' statistics.csv',index=0) 
-#    return record_file_df
-
-    
+    return raw_dict,tele_dict,record_file_df,index,start_time_local,end_time_local,path_save
+        
     
 def read_telemetrystatus(path_name):
+    """read the telementry_status, then return the useful data"""
     data=pd.read_csv(path_name)
     #find the data lines number in the file('telemetry_status.csv')
     for i in range(len(data['Unnamed: 0'])):
@@ -490,6 +635,19 @@ def read_telemetrystatus(path_name):
     return telemetrystatus_df
 
 def read_telemetry(path):
+    """read the telemetered data and fix a standard format, the return the standard data"""
     tele_df=pd.read_csv(path,sep='\s+',names=['vessel_n','esn','month','day','Hours','minates','fracyrday',\
                                           'lon','lat','dum1','dum2','depth','rangedepth','timerange','temp','stdtemp','year'])
     return tele_df
+
+
+def to_list(lat,lon):
+    "transfer the format to list"
+    x,y=[],[]
+    for i in range(len(lat)):
+        x.append(lat[i])
+        y.append(lon[i])
+    return x,y
+
+
+
