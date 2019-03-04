@@ -20,7 +20,7 @@ import numpy as np
 import math
 import difflib
 import time
-
+import requests
 
 def angle_conversion(a):
     a = np.array(a)
@@ -46,6 +46,16 @@ def dist(lat1=0,lon1=0,lat2=0,lon2=0):
                         np.sin(lat1)*np.sin(lat2))*conversion_factor
     return l
 
+def ThreeD_dist(lat1=0,lon1=0,lat2=0,lon2=0,h1=0,h2=0):
+    """caculate the distance of two points, return meters"""
+    R = 6371.004
+    lon1, lat1 = angle_conversion(lon1), angle_conversion(lat1)
+    lon2, lat2 = angle_conversion(lon2), angle_conversion(lat2)
+    l = R*np.arccos(np.cos(lat1)*np.cos(lat2)*np.cos(lon1-lon2)+\
+                        np.sin(lat1)*np.sin(lat2))
+    distance=math.sqrt((1000*l)**2+(h1-h2)**2)
+    return distance
+
 def find_header_rows(path_name):
     """the lens of header"""
     original_file=pd.read_csv(path_name,nrows=12,names=['0','1','2','3','4','5'])
@@ -54,6 +64,58 @@ def find_header_rows(path_name):
             header_rows=i
             break 
     return header_rows
+
+def fitting(point,lat,lon):
+    """
+    point represent many data include lat lon and z
+    format:[[lat,lon,z],[lat1,lon1,z]...]
+    """
+#represent the value of matrix
+    ISum = 0.0
+    X1Sum = 0.0
+    X2Sum = 0.0
+    X1_2Sum = 0.0
+    X1X2Sum = 0.0
+    X2_2Sum = 0.0
+    YSum = 0.0
+    X1YSum = 0.0
+    X2YSum = 0.0
+
+    for i in range(0,len(point)):
+        
+        x1i=point[i][0]
+        x2i=point[i][1]
+        yi=point[i][2]
+
+        ISum = ISum+1
+        X1Sum = X1Sum+x1i
+        X2Sum = X2Sum+x2i
+        X1_2Sum = X1_2Sum+x1i**2
+        X1X2Sum = X1X2Sum+x1i*x2i
+        X2_2Sum = X2_2Sum+x2i**2
+        YSum = YSum+yi
+        X1YSum = X1YSum+x1i*yi
+        X2YSum = X2YSum+x2i*yi
+
+#  matrix operations
+# _mat1 is the mat1 inverse matrix
+    m1=[[ISum,X1Sum,X2Sum],[X1Sum,X1_2Sum,X1X2Sum],[X2Sum,X1X2Sum,X2_2Sum]]
+    mat1 = np.matrix(m1)
+    m2=[[YSum],[X1YSum],[X2YSum]]
+    mat2 = np.matrix(m2)
+    _mat1 =mat1.getI()
+    mat3 = _mat1*mat2
+
+# use list to get the matrix data
+    m3=mat3.tolist()
+    a0 = m3[0][0]
+    a1 = m3[1][0]
+    a2 = m3[2][0]
+    y = a0+a1*lat+a2*lon
+
+    return y
+
+
 
 def fuzzyfinder(user_input, collection):
     suggestions = []
@@ -65,6 +127,11 @@ def fuzzyfinder(user_input, collection):
             suggestions.append((len(match.group()), match.start(), item))
     return [x for _, _, x in sorted(suggestions)] 
 
+def get_doppio_url(date):
+    url='http://tds.marine.rutgers.edu/thredds/dodsC/roms/doppio/2017_da/his/runs/History_RUN_2018-11-12T00:00:00Z'
+    return url.replace('2018-11-12',date)
+
+
 def gmt_to_eastern(times_gmt):
     """GMT time converted to US Eastern Time"""
     eastern = pytz.timezone('US/Eastern')
@@ -74,6 +141,15 @@ def gmt_to_eastern(times_gmt):
     easterndate=date_gmt.astimezone(eastern)
     return easterndate
 
+
+def  isConnected(address="http://server.arcgisonline.com/ArcGIS"):
+    
+    "check the internet"
+    try:
+        html = requests.get(address,timeout=2)
+    except:
+        return False
+    return True
 
 def keep_number(value,integer_num,decimal_digits):
     """keep the lens of value"""    
