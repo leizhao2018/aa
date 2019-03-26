@@ -11,7 +11,7 @@ update the function name draw to draw_time_series_plot and update the codes of t
 @author: leizhao
 """
 
-import rawdatamoudles as rdm
+import rawdatamodules as rdm
 from datetime import datetime
 import os
 #import shutil
